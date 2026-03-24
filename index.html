@@ -30,24 +30,29 @@
   ══════════════════════════════════════════ -->
   <aside class="side-menu" id="sideMenu" aria-hidden="true">
     <button class="side-menu-close" id="sideMenuClose" aria-label="Close menu">✕</button>
+
+    <!-- Logged-in user badge (populated by JS) -->
+    <div class="side-menu-user" id="sideMenuUser"></div>
+
     <h2>Menu</h2>
     <ul>
-      <li><a href="#">🗺️ Gitmap</a></li>
-      <li><a href="#">📰 Gitpub</a></li>
-      <li><a href="#">🤝 Gitpal</a></li>
+      <li><a href="./">🗺️ Gitmap</a></li>
+      <li><a href="https://www-infinity4.github.io/Gitpub/" id="menuGitpubLink">📰 Gitpub</a></li>
+      <li><a href="https://www-infinity4.github.io/Gitpal/" id="menuGitpalLink">🤝 Gitpal</a></li>
+      <li><a href="https://www-infinity4.github.io/GP/" id="menuGPLink">🌐 GP</a></li>
     </ul>
     <hr />
     <h3>Navigation</h3>
     <ul>
-      <li><a href="#">🗺️ Map</a></li>
-      <li><a href="#">🏅 Grades</a></li>
-      <li><a href="#">🔥 Trending</a></li>
+      <li><a href="./">🗺️ Map</a></li>
+      <li><a href="#grades" class="nav-scroll-link">🏅 Grades</a></li>
+      <li><a href="#trending" class="nav-scroll-link">🔥 Trending</a></li>
     </ul>
     <hr />
     <h3>Your Account</h3>
     <ul>
-      <li><a href="#">🔑 Login / Sign up</a></li>
-      <li><a href="#">⚙️ Settings</a></li>
+      <li><a href="#" id="menuLoginLink">🔑 Login / Sign up</a></li>
+      <li><a href="#" id="menuSettingsLink">⚙️ Settings</a></li>
     </ul>
     <hr />
     <h3>Grade Legend</h3>
@@ -165,6 +170,33 @@
   <dialog class="modal modal-detail" id="detailModal" aria-labelledby="detailTitle">
     <div class="detail-content" id="detailContent"></div>
     <button class="btn-cancel detail-close" id="detailClose">Close</button>
+  </dialog>
+
+  <!-- ══════════════════════════════════════════
+       SETTINGS MODAL
+  ══════════════════════════════════════════ -->
+  <dialog class="modal modal-settings" id="settingsModal" aria-labelledby="settingsTitle">
+    <div class="modal-form">
+      <h2 id="settingsTitle">⚙️ Settings</h2>
+
+      <label for="settingsSort">Default sort order</label>
+      <select id="settingsSort">
+        <option value="likes">Most Liked</option>
+        <option value="grade">Highest Grade</option>
+        <option value="newest">Newest</option>
+      </select>
+
+      <div class="settings-section">
+        <h3 style="font-size:.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px;">Data</h3>
+        <button type="button" id="settingsClearBtn" class="btn-danger">🗑️ Clear My Additions</button>
+        <p class="style-hint" style="margin-top:6px;">Removes items you added; seed items remain.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="settingsClose">Cancel</button>
+        <button type="button" class="btn-submit" id="settingsSave">Save</button>
+      </div>
+    </div>
   </dialog>
 
   <script src="app.js"></script>
