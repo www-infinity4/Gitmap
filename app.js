@@ -5,6 +5,16 @@
 'use strict';
 
 /* ══════════════════════════════════════
+   APP URLS (Infinity4 suite)
+══════════════════════════════════════ */
+const APP_URLS = {
+  gitmap:  'https://www-infinity4.github.io/Gitmap/',
+  gitpub:  'https://www-infinity4.github.io/Gitpub/',
+  gitpal:  'https://www-infinity4.github.io/Gitpal/',
+  gp:      'https://www-infinity4.github.io/GP/',
+};
+
+/* ══════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════ */
 
@@ -62,6 +72,8 @@ const SEED_ITEMS = [
 ];
 
 const STORAGE_KEY = 'gitmap_items_v2';
+const AUTH_KEY    = 'infinity4_user';   // shared key across all infinity4 apps
+const PREFS_KEY   = 'gitmap_prefs';
 
 /* ══════════════════════════════════════
    STATE
@@ -82,6 +94,29 @@ function loadItems() {
 
 function saveItems() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
+}
+
+/* ══════════════════════════════════════
+   PREFS
+══════════════════════════════════════ */
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; }
+}
+function savePrefs(prefs) {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch {}
+}
+
+/* ══════════════════════════════════════
+   AUTH  (shared localStorage with Gitpub)
+══════════════════════════════════════ */
+function getUser() {
+  try { return localStorage.getItem(AUTH_KEY) || null; } catch { return null; }
+}
+function setUser(name) {
+  try { localStorage.setItem(AUTH_KEY, name); } catch {}
+}
+function clearUser() {
+  try { localStorage.removeItem(AUTH_KEY); } catch {}
 }
 
 /* ══════════════════════════════════════
@@ -481,6 +516,7 @@ const sideMenuClose = document.getElementById('sideMenuClose');
 function openMenu() {
   sideMenu.classList.add('open');
   overlay.classList.add('visible');
+  hamburgerBtn.classList.add('open');
   sideMenu.setAttribute('aria-hidden', 'false');
   overlay.setAttribute('aria-hidden', 'false');
   hamburgerBtn.setAttribute('aria-expanded', 'true');
@@ -489,6 +525,7 @@ function openMenu() {
 function closeMenu() {
   sideMenu.classList.remove('open');
   overlay.classList.remove('visible');
+  hamburgerBtn.classList.remove('open');
   sideMenu.setAttribute('aria-hidden', 'true');
   overlay.setAttribute('aria-hidden', 'true');
   hamburgerBtn.setAttribute('aria-expanded', 'false');
@@ -499,6 +536,71 @@ hamburgerBtn.addEventListener('click', openMenu);
 sideMenuClose.addEventListener('click', closeMenu);
 overlay.addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+/* ══════════════════════════════════════
+   USER SECTION (side menu)
+══════════════════════════════════════ */
+function buildUserSection() {
+  const user      = getUser();
+  const userEl    = document.getElementById('sideMenuUser');
+  const loginLink = document.getElementById('menuLoginLink');
+
+  if (user) {
+    userEl.innerHTML = `
+      <div class="user-badge">
+        <span class="user-avatar">👤</span>
+        <span class="user-name">${escHtml(user)}</span>
+      </div>`;
+    loginLink.textContent = '🚪 Logout';
+    loginLink.onclick = e => {
+      e.preventDefault();
+      clearUser();
+      buildUserSection();
+      closeMenu();
+      showToast('Logged out.', 'info');
+    };
+  } else {
+    userEl.innerHTML = `<p class="side-menu-sign-in">Sign in via Gitpub to sync your activity.</p>`;
+    loginLink.textContent = '🔑 Login / Sign up';
+    loginLink.onclick = e => {
+      e.preventDefault();
+      const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
+      window.location.href = `${APP_URLS.gitpub}?returnUrl=${returnUrl}`;
+    };
+  }
+}
+
+/* ══════════════════════════════════════
+   SETTINGS MODAL
+══════════════════════════════════════ */
+const settingsModal = document.getElementById('settingsModal');
+
+document.getElementById('menuSettingsLink').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('settingsSort').value = sortBy;
+  closeMenu();
+  settingsModal.showModal();
+});
+
+document.getElementById('settingsClose').addEventListener('click', () => settingsModal.close());
+
+document.getElementById('settingsSave').addEventListener('click', () => {
+  sortBy = document.getElementById('settingsSort').value;
+  document.getElementById('sortSelect').value = sortBy;
+  savePrefs({ ...loadPrefs(), sortBy });
+  settingsModal.close();
+  renderCards();
+  showToast('Settings saved! ✅', 'success');
+});
+
+document.getElementById('settingsClearBtn').addEventListener('click', () => {
+  if (!confirm('Remove all items you added? The seed items will remain.')) return;
+  items = items.filter(i => i.id.startsWith('s'));
+  saveItems();
+  renderAll();
+  settingsModal.close();
+  showToast('Your additions have been cleared.', 'info');
+});
 
 /* ══════════════════════════════════════
    GRADE LEGEND (in side menu)
@@ -571,9 +673,32 @@ function renderAll() {
    INIT
 ══════════════════════════════════════ */
 (function init() {
+  // Handle login return from Gitpub (?user=username)
+  const urlParams = new URLSearchParams(window.location.search);
+  const userParam = urlParams.get('user');
+  if (userParam) {
+    setUser(userParam);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('user');
+    history.replaceState({}, '', url.toString());
+  }
+
+  // Apply saved sort preference
+  const prefs = loadPrefs();
+  if (prefs.sortBy) {
+    sortBy = prefs.sortBy;
+    document.getElementById('sortSelect').value = sortBy;
+  }
+
   const saved = loadItems();
   items = saved && saved.length ? saved : JSON.parse(JSON.stringify(SEED_ITEMS));
 
   buildGradeLegend();
+  buildUserSection();
   renderAll();
+
+  // Greet user after potential login
+  if (userParam) {
+    showToast(`Welcome, ${escHtml(userParam)}! 👋`, 'success');
+  }
 })();
