@@ -481,6 +481,7 @@ const sideMenuClose = document.getElementById('sideMenuClose');
 function openMenu() {
   sideMenu.classList.add('open');
   overlay.classList.add('visible');
+  hamburgerBtn.classList.add('open');
   sideMenu.setAttribute('aria-hidden', 'false');
   overlay.setAttribute('aria-hidden', 'false');
   hamburgerBtn.setAttribute('aria-expanded', 'true');
@@ -489,13 +490,14 @@ function openMenu() {
 function closeMenu() {
   sideMenu.classList.remove('open');
   overlay.classList.remove('visible');
+  hamburgerBtn.classList.remove('open');
   sideMenu.setAttribute('aria-hidden', 'true');
   overlay.setAttribute('aria-hidden', 'true');
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   hamburgerBtn.focus();
 }
 
-hamburgerBtn.addEventListener('click', openMenu);
+hamburgerBtn.addEventListener('click', () => sideMenu.classList.contains('open') ? closeMenu() : openMenu());
 sideMenuClose.addEventListener('click', closeMenu);
 overlay.addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
