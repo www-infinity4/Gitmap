@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gitmap — Infinity Grade</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ══════════════════════════════════════════
+       NAV / HAMBURGER
+  ══════════════════════════════════════════ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="sideMenu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="navbar-brand">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='28' height='28'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2300d4ff' opacity='.18'/%3E%3Cpath d='M8 16 Q16 6 24 16 Q16 26 8 16Z' fill='%2300d4ff' opacity='.7'/%3E%3C/svg%3E" alt="Gitmap logo" />
+      Gitmap
+    </span>
+    <div class="navbar-links">
+      <a href="#" class="nav-link active">Map</a>
+      <a href="#" class="nav-link">Grades</a>
+      <a href="#" class="nav-link">Trending</a>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       SIDE MENU (hamburger drawer)
+  ══════════════════════════════════════════ -->
+  <aside class="side-menu" id="sideMenu" aria-hidden="true">
+    <button class="side-menu-close" id="sideMenuClose" aria-label="Close menu">✕</button>
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="#">🗺️ Gitmap</a></li>
+      <li><a href="#">📰 Gitpub</a></li>
+      <li><a href="#">🤝 Gitpal</a></li>
+    </ul>
+    <hr />
+    <h3>Navigation</h3>
+    <ul>
+      <li><a href="#">🗺️ Map</a></li>
+      <li><a href="#">🏅 Grades</a></li>
+      <li><a href="#">🔥 Trending</a></li>
+    </ul>
+    <hr />
+    <h3>Your Account</h3>
+    <ul>
+      <li><a href="#">🔑 Login / Sign up</a></li>
+      <li><a href="#">⚙️ Settings</a></li>
+    </ul>
+    <hr />
+    <h3>Grade Legend</h3>
+    <ul class="grade-legend-list" id="gradeLegendList"></ul>
+  </aside>
+  <div class="overlay" id="overlay" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- Search bar -->
+    <section class="search-section" aria-label="Search and add to map">
+      <div class="search-bar-wrapper">
+        <label for="searchInput" class="visually-hidden">Search or add item</label>
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search scripts, tools, games, AI…"
+          autocomplete="off"
+          aria-autocomplete="list"
+          aria-controls="searchSuggestions"
+        />
+        <button class="btn-add-to-map" id="addToMapBtn" title="Add to map" aria-label="Add search to map">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="btn-search" id="searchBtn" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2" fill="none"/>
+            <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+
+      <!-- Category chips -->
+      <div class="category-chips" id="categoryChips" role="group" aria-label="Category filter">
+        <span class="chip chip-all active" data-cat="all">All</span>
+      </div>
+    </section>
+
+    <!-- Map area -->
+    <section class="map-section" aria-label="Infinity Grade map">
+      <div class="map-canvas" id="mapCanvas" role="img" aria-label="Map of deployed items">
+        <div class="map-grid" id="mapGrid" aria-hidden="true"></div>
+        <div class="map-nodes" id="mapNodes"></div>
+        <p class="map-empty-msg" id="mapEmptyMsg">
+          Search for something and press <strong>+</strong> to add it to the map!
+        </p>
+      </div>
+    </section>
+
+    <!-- Items list / cards -->
+    <section class="items-section" aria-label="Deployed items">
+      <div class="items-header">
+        <h2>Deployed on Map <span class="item-count" id="itemCount">0</span></h2>
+        <select class="sort-select" id="sortSelect" aria-label="Sort items">
+          <option value="likes">Most Liked</option>
+          <option value="grade">Highest Grade</option>
+          <option value="newest">Newest</option>
+        </select>
+      </div>
+      <div class="items-grid" id="itemsGrid"></div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       ADD-TO-MAP MODAL
+  ══════════════════════════════════════════ -->
+  <dialog class="modal" id="addModal" aria-labelledby="modalTitle">
+    <form class="modal-form" id="addForm" method="dialog">
+      <h2 id="modalTitle">Add to Map</h2>
+      <label for="modalName">Name</label>
+      <input type="text" id="modalName" required placeholder="e.g. AI Code Review Bot" />
+
+      <label for="modalCategory">Category</label>
+      <select id="modalCategory">
+        <option value="scripts">Scripts</option>
+        <option value="tools">Tools</option>
+        <option value="games">Games</option>
+        <option value="logic">Logic</option>
+        <option value="workflows">Workflows</option>
+        <option value="strategy">Strategy</option>
+        <option value="design">Design</option>
+        <option value="ai">AI Uses</option>
+        <option value="bots">Bots</option>
+        <option value="os">OS</option>
+        <option value="quantum">Quantum</option>
+        <option value="algorithm">Algorithm</option>
+      </select>
+
+      <label for="modalDescription">Description <span class="optional">(optional)</span></label>
+      <textarea id="modalDescription" rows="2" placeholder="What does it do?"></textarea>
+
+      <label for="modalStyle">Button / Feature Style <span class="optional">(optional)</span></label>
+      <input type="text" id="modalStyle" placeholder="e.g. gradient pill, neon border…" />
+      <p class="style-hint">✨ New or unique styling boosts your grade!</p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="modalCancel">Cancel</button>
+        <button type="submit" class="btn-submit">Deploy to Map 🚀</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ══════════════════════════════════════════
+       ITEM DETAIL MODAL
+  ══════════════════════════════════════════ -->
+  <dialog class="modal modal-detail" id="detailModal" aria-labelledby="detailTitle">
+    <div class="detail-content" id="detailContent"></div>
+    <button class="btn-cancel detail-close" id="detailClose">Close</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
