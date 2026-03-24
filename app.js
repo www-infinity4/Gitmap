@@ -17,6 +17,7 @@ const APP_URLS = {
 /* ══════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════ */
+const MENU_CLOSE_MS = 280; // matches side-menu slide-out transition
 
 const GRADES = [
   { id: 'platinum', label: 'Platinum', color: '#e8e8f0', minLikes: 100, noveltyBonus: 3 },
@@ -80,11 +81,31 @@ const PREFS_KEY   = 'gitmap_prefs';
 ══════════════════════════════════════ */
 let items = [];
 let activeCategory = 'all';
+let activeGrade    = 'all';
 let sortBy = 'likes';
+let searchQuery = '';
 
 /* ══════════════════════════════════════
-   PERSISTENCE
+   ITEM FILTER HELPER
 ══════════════════════════════════════ */
+/**
+ * Returns items that match the current activeCategory, activeGrade and searchQuery filters.
+ * Centralises the filter logic so renderMap and renderCards stay in sync.
+ */
+function getFilteredItems() {
+  return items.filter(i => {
+    if (activeCategory !== 'all' && i.category !== activeCategory) return false;
+    if (activeGrade !== 'all' && computeGrade(i).id !== activeGrade) return false;
+    if (searchQuery) {
+      return i.name.toLowerCase().includes(searchQuery) ||
+        (i.description || '').toLowerCase().includes(searchQuery) ||
+        i.category.toLowerCase().includes(searchQuery);
+    }
+    return true;
+  });
+}
+
+
 function loadItems() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -150,7 +171,7 @@ function renderMap() {
   const emptyMsg   = document.getElementById('mapEmptyMsg');
   container.innerHTML = '';
 
-  const visible = items.filter(i => activeCategory === 'all' || i.category === activeCategory);
+  const visible = getFilteredItems();
   emptyMsg.style.display = visible.length ? 'none' : 'flex';
 
   visible.forEach(item => {
@@ -192,7 +213,7 @@ function renderCards() {
   const countEl = document.getElementById('itemCount');
   grid.innerHTML = '';
 
-  let visible = items.filter(i => activeCategory === 'all' || i.category === activeCategory);
+  let visible = getFilteredItems();
 
   if (sortBy === 'likes') {
     visible.sort((a, b) => b.likes - a.likes);
@@ -294,7 +315,15 @@ document.getElementById('searchBtn').addEventListener('click', triggerSearch);
 
 function handleSearchInput() {
   const q = searchInput.value.trim().toLowerCase();
-  if (!q) { closeSuggestions(); return; }
+  if (!q) {
+    if (searchQuery) {
+      searchQuery = '';
+      renderCards();
+      renderMap();
+    }
+    closeSuggestions();
+    return;
+  }
 
   const matches = items.filter(i =>
     i.name.toLowerCase().includes(q) ||
@@ -337,9 +366,9 @@ function handleSearchInput() {
 function triggerSearch() {
   closeSuggestions();
   const q = searchInput.value.trim();
-  if (!q) return;
-  // highlight matching cards
+  searchQuery = q.toLowerCase();
   renderCards();
+  renderMap();
 }
 
 function closeSuggestions() {
@@ -442,7 +471,7 @@ function openDetailModal(id) {
         <span class="stat-value" style="font-size:.95rem;">${CATEGORY_LABELS[item.category] || item.category}</span>
       </div>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="like-btn ${item.liked ? 'liked' : ''}" id="detailLikeBtn">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"
              fill="${item.liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
@@ -451,6 +480,9 @@ function openDetailModal(id) {
         ${item.liked ? 'Unlike' : 'Like'} (${item.likes})
       </button>
       <span style="font-size:.8rem; color:var(--text-muted);">Likes help boost the grade!</span>
+      ${item.id.startsWith('u') ? `
+        <button class="btn-cancel" id="detailEditBtn" style="font-size:.85rem; padding:6px 14px; margin-left:auto;">✏️ Edit</button>
+      ` : ''}
     </div>
   `;
 
@@ -458,6 +490,14 @@ function openDetailModal(id) {
     toggleLike(id);
     openDetailModal(id); // refresh
   });
+
+  const editBtn = document.getElementById('detailEditBtn');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      detailModal.close();
+      openEditModal(id);
+    });
+  }
 
   detailModal.showModal();
 }
@@ -537,6 +577,27 @@ sideMenuClose.addEventListener('click', closeMenu);
 overlay.addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
+/* Smooth-scroll links inside the hamburger menu */
+document.querySelectorAll('.nav-scroll-link').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    closeMenu();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), MENU_CLOSE_MS);
+  });
+});
+
+/* Navbar top links — smooth scroll + active state */
+document.querySelectorAll('.navbar-links .nav-link[data-section]').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector('#' + link.dataset.section);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.navbar-links .nav-link').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
 /* ══════════════════════════════════════
    USER SECTION (side menu)
 ══════════════════════════════════════ */
@@ -564,8 +625,9 @@ function buildUserSection() {
     loginLink.textContent = '🔑 Login / Sign up';
     loginLink.onclick = e => {
       e.preventDefault();
-      const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
-      window.location.href = `${APP_URLS.gitpub}?returnUrl=${returnUrl}`;
+      document.getElementById('loginUsername').value = '';
+      closeMenu();
+      document.getElementById('loginModal').showModal();
     };
   }
 }
@@ -603,8 +665,140 @@ document.getElementById('settingsClearBtn').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════
-   GRADE LEGEND (in side menu)
+   LOGIN MODAL
 ══════════════════════════════════════ */
+const loginModal = document.getElementById('loginModal');
+
+document.getElementById('loginCancel').addEventListener('click', () => loginModal.close());
+
+function doLogin() {
+  const name = document.getElementById('loginUsername').value.trim();
+  if (!name) { document.getElementById('loginUsername').focus(); return; }
+  setUser(name);
+  loginModal.close();
+  buildUserSection();
+  showToast(`Welcome, ${escHtml(name)}! 👋`, 'success');
+}
+
+document.getElementById('loginConfirmBtn').addEventListener('click', doLogin);
+
+document.getElementById('loginUsername').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); doLogin(); }
+});
+
+document.getElementById('loginViaGitpubBtn').addEventListener('click', e => {
+  e.preventDefault();
+  loginModal.close();
+  const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
+  window.location.href = `${APP_URLS.gitpub}?returnUrl=${returnUrl}`;
+});
+
+/* ══════════════════════════════════════
+   GRADE SHOWCASE
+══════════════════════════════════════ */
+function buildGradesShowcase() {
+  const container = document.getElementById('gradesShowcase');
+  if (!container) return;
+
+  container.innerHTML = GRADES.map(g => {
+    const gradeItems = items.filter(i => computeGrade(i).id === g.id);
+    const topItem = gradeItems.slice().sort((a, b) => b.likes - a.likes)[0];
+    const isActive = activeGrade === g.id;
+    return `
+      <div class="grade-tier-card grade-${g.id} ${isActive ? 'grade-tier-active' : ''}"
+           data-grade="${g.id}" style="--grade-color:${g.color}"
+           role="button" tabindex="0" aria-label="Filter by ${g.label} grade${isActive ? ' (active)' : ''}">
+        <div class="grade-tier-header">
+          <span class="grade-tier-icon">${gradeIcon(g.id)}</span>
+          <span class="grade-tier-label">${g.label}</span>
+          <span class="grade-tier-req">${g.minLikes > 0 ? `≥${g.minLikes} ♥` : 'New'}</span>
+        </div>
+        <div class="grade-tier-count">${gradeItems.length} item${gradeItems.length !== 1 ? 's' : ''}</div>
+        ${topItem ? `
+          <div class="grade-tier-top">
+            <span>${CATEGORY_ICONS[topItem.category] || '📦'}</span>
+            <span class="grade-tier-top-name">${escHtml(topItem.name)}</span>
+          </div>` : `<div class="grade-tier-empty">No items yet</div>`}
+      </div>`;
+  }).join('');
+
+  const hint = document.getElementById('gradeFilterHint');
+  if (hint) hint.style.display = activeGrade !== 'all' ? 'inline' : 'none';
+
+  container.querySelectorAll('.grade-tier-card').forEach(card => {
+    const activate = () => {
+      const gradeId = card.dataset.grade;
+      activeGrade = activeGrade === gradeId ? 'all' : gradeId;
+      buildGradesShowcase();
+      renderCards();
+      renderMap();
+      if (activeGrade !== 'all') {
+        document.getElementById('trending')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
+  });
+}
+
+document.getElementById('clearGradeFilter')?.addEventListener('click', e => {
+  e.preventDefault();
+  activeGrade = 'all';
+  buildGradesShowcase();
+  renderCards();
+  renderMap();
+});
+
+/* ══════════════════════════════════════
+   EDIT / DELETE ITEM MODAL
+══════════════════════════════════════ */
+const editModal = document.getElementById('editModal');
+const editForm  = document.getElementById('editForm');
+let editingItemId = null;
+
+document.getElementById('editCancel').addEventListener('click', () => editModal.close());
+
+document.getElementById('editDeleteBtn').addEventListener('click', () => {
+  if (!editingItemId) return;
+  if (!confirm('Delete this item from the map?')) return;
+  items = items.filter(i => i.id !== editingItemId);
+  saveItems();
+  editModal.close();
+  detailModal.close();
+  renderAll();
+  showToast('Item deleted.', 'info');
+});
+
+editForm.addEventListener('submit', e => {
+  e.preventDefault();
+  if (!editingItemId) return;
+  const item = items.find(i => i.id === editingItemId);
+  if (!item) return;
+  const newName = document.getElementById('editName').value.trim();
+  if (!newName) return;
+  item.name        = newName;
+  item.category    = document.getElementById('editCategory').value;
+  item.description = document.getElementById('editDescription').value.trim();
+  item.style       = document.getElementById('editStyle').value.trim();
+  saveItems();
+  editModal.close();
+  renderAll();
+  openDetailModal(editingItemId);
+  showToast('Item updated! ✅', 'success');
+});
+
+function openEditModal(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  editingItemId = id;
+  document.getElementById('editName').value        = item.name;
+  document.getElementById('editCategory').value    = item.category;
+  document.getElementById('editDescription').value = item.description || '';
+  document.getElementById('editStyle').value       = item.style || '';
+  editModal.showModal();
+}
+
+
 function buildGradeLegend() {
   const list = document.getElementById('gradeLegendList');
   list.innerHTML = GRADES.map(g => `
@@ -665,6 +859,7 @@ function scrollToCard(id) {
 ══════════════════════════════════════ */
 function renderAll() {
   buildCategoryChips();
+  buildGradesShowcase();
   renderMap();
   renderCards();
 }

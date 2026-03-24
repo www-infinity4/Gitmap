@@ -734,8 +734,116 @@ html, body {
 .stat-value { font-size: 1.15rem; font-weight: 700; }
 
 /* ══════════════════════════════════════
-   TOAST
+   GRADES SHOWCASE
 ══════════════════════════════════════ */
+.grades-section { margin-top: 40px; }
+
+.grades-showcase {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+}
+
+.grade-tier-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition),
+              transform var(--transition);
+}
+.grade-tier-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--grade-color, var(--border));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.grade-tier-card:hover, .grade-tier-card.grade-tier-active {
+  border-color: var(--grade-color, var(--accent));
+  box-shadow: 0 0 0 1px var(--grade-color, var(--accent)), 0 6px 20px rgba(0,0,0,.3);
+  transform: translateY(-2px);
+}
+.grade-tier-card.grade-tier-active { background: rgba(255,255,255,.03); }
+
+.grade-tier-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: nowrap;
+}
+.grade-tier-icon { font-size: 1.05rem; flex-shrink: 0; }
+.grade-tier-label {
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--grade-color, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.grade-tier-req {
+  margin-left: auto;
+  font-size: .7rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,.06);
+  padding: 2px 6px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.grade-tier-count {
+  font-size: .76rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.grade-tier-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: var(--text);
+  background: rgba(255,255,255,.04);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+}
+.grade-tier-top-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grade-tier-empty {
+  font-size: .76rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.grade-filter-hint {
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════
+   LOGIN / EDIT MODALS
+══════════════════════════════════════ */
+.modal-login { width: min(380px, 94vw); }
+.modal-edit  { width: min(480px, 94vw); }
+
+.login-alt-link {
+  font-size: .78rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: -4px;
+}
+.login-alt-link a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.login-alt-link a:hover { text-decoration: underline; }
+
+
 .toast-container {
   position: fixed;
   bottom: 24px; right: 24px;

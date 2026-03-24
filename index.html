@@ -19,9 +19,9 @@
       Gitmap
     </span>
     <div class="navbar-links">
-      <a href="#" class="nav-link active">Map</a>
-      <a href="#" class="nav-link">Grades</a>
-      <a href="#" class="nav-link">Trending</a>
+      <a href="#map-section" class="nav-link active" data-section="map-section">Map</a>
+      <a href="#grades" class="nav-link" data-section="grades">Grades</a>
+      <a href="#trending" class="nav-link" data-section="trending">Trending</a>
     </div>
   </nav>
 
@@ -44,7 +44,7 @@
     <hr />
     <h3>Navigation</h3>
     <ul>
-      <li><a href="./">🗺️ Map</a></li>
+      <li><a href="#map-section" class="nav-scroll-link">🗺️ Map</a></li>
       <li><a href="#grades" class="nav-scroll-link">🏅 Grades</a></li>
       <li><a href="#trending" class="nav-scroll-link">🔥 Trending</a></li>
     </ul>
@@ -100,7 +100,7 @@
     </section>
 
     <!-- Map area -->
-    <section class="map-section" aria-label="Infinity Grade map">
+    <section class="map-section" id="map-section" aria-label="Infinity Grade map">
       <div class="map-canvas" id="mapCanvas" role="img" aria-label="Map of deployed items">
         <div class="map-grid" id="mapGrid" aria-hidden="true"></div>
         <div class="map-nodes" id="mapNodes"></div>
@@ -111,7 +111,7 @@
     </section>
 
     <!-- Items list / cards -->
-    <section class="items-section" aria-label="Deployed items">
+    <section class="items-section" id="trending" aria-label="Deployed items">
       <div class="items-header">
         <h2>Deployed on Map <span class="item-count" id="itemCount">0</span></h2>
         <select class="sort-select" id="sortSelect" aria-label="Sort items">
@@ -121,6 +121,17 @@
         </select>
       </div>
       <div class="items-grid" id="itemsGrid"></div>
+    </section>
+
+    <!-- Grades showcase -->
+    <section class="grades-section" id="grades" aria-label="Infinity Grade tiers">
+      <div class="items-header">
+        <h2>🏅 Infinity Grades</h2>
+        <span class="grade-filter-hint" id="gradeFilterHint" style="display:none;">
+          Filtered — <a href="#" id="clearGradeFilter" style="color:var(--accent); text-decoration:none;">Clear filter</a>
+        </span>
+      </div>
+      <div class="grades-showcase" id="gradesShowcase"></div>
     </section>
 
   </main>
@@ -197,6 +208,66 @@
         <button type="button" class="btn-submit" id="settingsSave">Save</button>
       </div>
     </div>
+  </dialog>
+
+  <!-- ══════════════════════════════════════════
+       LOGIN MODAL
+  ══════════════════════════════════════════ -->
+  <dialog class="modal modal-login" id="loginModal" aria-labelledby="loginTitle">
+    <div class="modal-form">
+      <h2 id="loginTitle">🔑 Sign In</h2>
+      <p class="style-hint" style="margin-top:-4px;">Enter your Infinity4 username to sync activity across all apps.</p>
+      <label for="loginUsername">Username</label>
+      <input type="text" id="loginUsername" placeholder="Your Infinity4 username" autocomplete="username" />
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="loginCancel">Cancel</button>
+        <button type="button" class="btn-submit" id="loginConfirmBtn">Sign In ✨</button>
+      </div>
+      <p class="login-alt-link">
+        Or <a href="#" id="loginViaGitpubBtn" aria-label="Sign in via Gitpub (external)">sign in via Gitpub →</a>
+      </p>
+    </div>
+  </dialog>
+
+  <!-- ══════════════════════════════════════════
+       EDIT ITEM MODAL
+  ══════════════════════════════════════════ -->
+  <dialog class="modal modal-edit" id="editModal" aria-labelledby="editTitle">
+    <form class="modal-form" id="editForm">
+      <h2 id="editTitle">✏️ Edit Item</h2>
+      <label for="editName">Name</label>
+      <input type="text" id="editName" required placeholder="Item name" />
+
+      <label for="editCategory">Category</label>
+      <select id="editCategory">
+        <option value="scripts">Scripts</option>
+        <option value="tools">Tools</option>
+        <option value="games">Games</option>
+        <option value="logic">Logic</option>
+        <option value="workflows">Workflows</option>
+        <option value="strategy">Strategy</option>
+        <option value="design">Design</option>
+        <option value="ai">AI Uses</option>
+        <option value="bots">Bots</option>
+        <option value="os">OS</option>
+        <option value="quantum">Quantum</option>
+        <option value="algorithm">Algorithm</option>
+      </select>
+
+      <label for="editDescription">Description <span class="optional">(optional)</span></label>
+      <textarea id="editDescription" rows="2" placeholder="What does it do?"></textarea>
+
+      <label for="editStyle">Button / Feature Style <span class="optional">(optional)</span></label>
+      <input type="text" id="editStyle" placeholder="e.g. gradient pill, neon border…" />
+
+      <div class="modal-actions" style="justify-content:space-between;">
+        <button type="button" class="btn-danger" id="editDeleteBtn">🗑️ Delete</button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn-cancel" id="editCancel">Cancel</button>
+          <button type="submit" class="btn-submit">Save Changes ✅</button>
+        </div>
+      </div>
+    </form>
   </dialog>
 
   <script src="app.js"></script>
